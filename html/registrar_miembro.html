@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registrar Miembro</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<header>
+    <img src="../img/logo.png">
+    <nav>
+        <a href="index.html">Inicio</a>
+    </nav>
+</header>
+
+<div class="container">
+    <h1>Registrar Miembro</h1>
+
+    <form id="formMiembro">
+        <label>Nombre *</label>
+        <input id="nombre" type="text">
+
+        <label>Email *</label>
+        <input id="email" type="text">
+
+        <label>Tipo de Miembro *</label>
+        <select id="tipo">
+            <option>Estudiante</option>
+            <option>Funcionario</option>
+            <option>Académico</option>
+        </select>
+
+        <label>RUT *</label>
+        <input type="text">
+
+        <label>Teléfono</label>
+        <input type="text">
+
+        <button>Registrar</button>
+    </form>
+</div>
+<script src="../js/validar_miembro.js"></script>
+</body>
+</html>
