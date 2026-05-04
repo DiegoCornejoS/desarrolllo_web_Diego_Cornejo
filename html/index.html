@@ -1,26 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Inicio</title>
-    <link rel="stylesheet" href="../css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Actividades - DCC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Google Fonts para tipografía moderna -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header>
+        <nav>
+            <a href="{{ url_for('index') }}" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                DCC Actividades
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="active">Inicio</a></li>
+                <li><a href="{{ url_for('registro') }}">Registrar Miembro y Actividad</a></li>
+                <li><a href="{{ url_for('listado') }}">Listado de Miembros</a></li>
+                <li><a href="{{ url_for('indicadores') }}">Estadísticas</a></li>
+            </ul>
+        </nav>
+    </header>
 
-<header>
-    <img src="../img/logo.png">
-    <nav>
-        <a href="index.html">Inicio</a>
-        <a href="registrar_miembro.html">Registrar Miembro</a>
-        <a href="registrar_actividad.html">Registrar Actividad</a>
-        <a href="listar_miembros.html">Listar Miembros</a>
-        <a href="metricas.html">Métricas</a>
-    </nav>
-</header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 2rem;">
+                {% for category, message in messages %}
+                    <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: white; background-color: {{ '#22c55e' if category == 'success' else '#ef4444' }};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-<div class="container">
-    <h1>Sistema de Actividades DCC</h1>
-    <p>Prototipo de gestión de miembros y actividades.</p>
-</div>
+        <section class="hero">
+            <h1>Bienvenido a la Comunidad DCC</h1>
+            <p>Gestiona, descubre y comparte tus actividades extracurriculares. Conecta con otros miembros del Departamento de Ciencias de la Computación.</p>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                <a href="{{ url_for('registro') }}" class="btn" style="background: white; color: var(--primary-color);">Únete Ahora</a>
+                <a href="{{ url_for('listado') }}" class="btn" style="border: 1px solid white;">Ver Comunidad</a>
+            </div>
+        </section>
 
+        <!-- Últimos 5 miembros -->
+        <section style="margin-top: 4rem;">
+            <h2>Últimos Miembros Registrados</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Tipo de Miembro</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Dato Específico</th>
+                            <th>Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if miembros %}
+                            {% for m in miembros %}
+                            <tr>
+                                <td>{{ m.nombre }}</td>
+                                <td>
+                                    {% if m.tipo_miembro == 'estudiante_pregrado' %}<span class="badge estudiante">Est. Pregrado</span>
+                                    {% elif m.tipo_miembro == 'estudiante_postgrado' %}<span class="badge estudiante">Est. Postgrado</span>
+                                    {% elif m.tipo_miembro == 'funcionario' %}<span class="badge funcionario">Funcionario</span>
+                                    {% else %}<span class="badge academico">Académico</span>{% endif %}
+                                </td>
+                                <td>{{ m.email }}</td>
+                                <td>{{ m.telefono if m.telefono else '-' }}</td>
+                                <td>{{ m.dato_especifico }}</td>
+                                <td>{{ m.fecha_registro.strftime('%d-%m-%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="6">No hay miembros registrados aún o no se ha conectado a la BD.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="charts-grid" style="margin-top: 4rem;">
+            <div class="chart-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary-color);">📝</div>
+                <h3>1. Regístrate</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Crea tu perfil e identifícate como estudiante, funcionario o académico del DCC.</p>
+            </div>
+            <div class="chart-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--success-color);">🎯</div>
+                <h3>2. Informa tus Actividades</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Comparte las actividades artísticas, deportivas, tecnológicas o sociales en las que participas.</p>
+            </div>
+            <div class="chart-card" style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem; color: #f59e0b;">📊</div>
+                <h3>3. Explora Métricas</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Visualiza cómo se distribuyen las actividades y conoce mejor a nuestra comunidad.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Departamento de Ciencias de la Computación - Tarea 2</p>
+    </footer>
 </body>
 </html>

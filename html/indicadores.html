@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicadores - DCC Actividades</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js para los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{{ url_for('index') }}" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                DCC Actividades
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('registro') }}">Registrar Miembro y Actividad</a></li>
+                <li><a href="{{ url_for('listado') }}">Listado de Miembros</a></li>
+                <li><a href="{{ url_for('indicadores') }}" class="active">Estadísticas</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div style="max-width: 1000px; margin: 0 auto;">
+            <h2 style="margin-bottom: 2rem; color: var(--text-main); text-align: center;">Indicadores y Métricas</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">(Nota: Según la Tarea 2, las funcionalidades de estadísticas quedan pendientes para la siguiente tarea, por lo que estos gráficos son demostrativos estáticos de la Tarea 1).</p>
+            <div class="charts-grid">
+                <!-- Gráfico de Miembros por Tipo -->
+                <div class="chart-card">
+                    <h3 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Miembros por Tipo</h3>
+                    <div class="chart-container">
+                        <canvas id="miembrosChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Actividades por Categoría -->
+                <div class="chart-card">
+                    <h3 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Actividades por Categoría</h3>
+                    <div class="chart-container">
+                        <canvas id="actividadesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Departamento de Ciencias de la Computación - Tarea 2</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+</body>
+</html>

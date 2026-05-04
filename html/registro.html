@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Miembro y Actividades - DCC Actividades</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{{ url_for('index') }}" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                DCC Actividades
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('registro') }}" class="active">Registrar Miembro y Actividad</a></li>
+                <li><a href="{{ url_for('listado') }}">Listado de Miembros</a></li>
+                <li><a href="{{ url_for('indicadores') }}">Estadísticas</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 2rem;">
+                {% for category, message in messages %}
+                    <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: white; background-color: {{ '#22c55e' if category == 'success' else '#ef4444' }};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="card" style="max-width: 900px;">
+            <h2>Registro de Miembros y sus Actividades</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Ingresa tus datos y al menos una actividad. Los campos con <span style="color: var(--error-color);">*</span> son obligatorios.</p>
+            
+            <form id="registroActividadForm" method="POST" enctype="multipart/form-data" novalidate action="{{ url_for('registro') }}">
+                
+                <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Datos del Miembro</h3>
+                
+                <div class="form-group" id="group-nombre">
+                    <label for="nombre">Nombre Completo <span class="required-mark">*</span></label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej. Juan Pérez">
+                    <span class="error-message">El nombre es obligatorio (mínimo 3 caracteres, máximo 50).</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" id="group-email">
+                        <label for="email">Correo Electrónico <span class="required-mark">*</span></label>
+                        <input type="email" id="email" name="email" placeholder="ejemplo@dcc.uchile.cl">
+                        <span class="error-message">Ingresa un correo electrónico válido.</span>
+                    </div>
+
+                    <div class="form-group" id="group-telefono">
+                        <label for="telefono">Teléfono de Contacto</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="Ej. +56912345678">
+                        <span class="helper-text">Opcional. Formato numérico.</span>
+                        <span class="error-message">Formato inválido. Usa solo números y el símbolo + (opcional).</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" id="group-region">
+                        <label for="region_id">Región <span class="required-mark">*</span></label>
+                        <select id="region_id" name="region_id" onchange="actualizarComunas()">
+                            <option value="">Seleccione Región...</option>
+                            {% for r in regiones %}
+                                <option value="{{ r.id }}">{{ r.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="group-comuna">
+                        <label for="comuna_id">Comuna <span class="required-mark">*</span></label>
+                        <select id="comuna_id" name="comuna_id">
+                            <option value="">Seleccione Comuna...</option>
+                            <!-- Se llenan por JS -->
+                        </select>
+                        <span class="error-message">Debes seleccionar una comuna.</span>
+                    </div>
+                </div>
+
+                <div class="form-group" id="group-tipo">
+                    <label for="tipo_miembro">Tipo de Miembro <span class="required-mark">*</span></label>
+                    <select id="tipo_miembro" name="tipo_miembro">
+                        <option value="">Seleccione una opción...</option>
+                        <option value="estudiante_pregrado">Estudiante de Pregrado</option>
+                        <option value="estudiante_postgrado">Estudiante de Postgrado</option>
+                        <option value="funcionario">Funcionario(a)</option>
+                        <option value="academico">Académico(a)</option>
+                    </select>
+                    <span class="error-message">Debes seleccionar el tipo de miembro.</span>
+                </div>
+
+                <div id="datos_especificos" style="display: none; padding: 1.5rem; background-color: #f8fafc; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+                    <!-- Se llenará vía JS -->
+                </div>
+
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Informar Actividad</h3>
+
+                <div class="form-row">
+                    <div class="form-group" id="group-nombre-actividad">
+                        <label for="nombre_actividad">Nombre de la Actividad <span class="required-mark">*</span></label>
+                        <input type="text" id="nombre_actividad" name="nombre_actividad" placeholder="Ej. Taller de Robótica">
+                        <span class="error-message">El nombre es obligatorio (mínimo 3 caracteres, máximo 100).</span>
+                    </div>
+
+                    <div class="form-group" id="group-tipo-actividad">
+                        <label for="tipo_actividad">Tipo de Actividad <span class="required-mark">*</span></label>
+                        <select id="tipo_actividad" name="tipo_actividad">
+                            <option value="">Seleccione una opción...</option>
+                            <!-- Mapeado desde Python en el futuro, por ahora hardcode o desde app si pasamos lista -->
+                            <option value="arte">Arte</option>
+                            <option value="deporte">Deporte</option>
+                            <option value="tecnología">Tecnología</option>
+                            <option value="social">Social</option>
+                            <option value="recreación">Recreación</option>
+                            <option value="otra">Otra</option>
+                        </select>
+                        <span class="error-message">Debes seleccionar el tipo de actividad.</span>
+                    </div>
+                </div>
+
+                <div class="form-group" id="group-dias">
+                    <label>Días de la Semana <span class="required-mark">*</span></label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="lunes"> Lunes</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="martes"> Martes</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="miércoles"> Miércoles</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="jueves"> Jueves</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="viernes"> Viernes</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="sábado"> Sábado</label>
+                        <label class="checkbox-label"><input type="checkbox" name="dias" value="domingo"> Domingo</label>
+                    </div>
+                    <span class="error-message">Debes seleccionar al menos un día.</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" id="group-hora-inicio">
+                        <label for="hora_inicio">Hora de Inicio <span class="required-mark">*</span></label>
+                        <input type="time" id="hora_inicio" name="hora_inicio">
+                        <span class="error-message">Debes indicar la hora de inicio.</span>
+                    </div>
+
+                    <div class="form-group" id="group-hora-fin">
+                        <label for="hora_fin">Hora de Fin <span class="required-mark">*</span></label>
+                        <input type="time" id="hora_fin" name="hora_fin">
+                        <span class="error-message">Debes indicar la hora de fin y debe ser posterior al inicio.</span>
+                    </div>
+                </div>
+
+                <div class="form-group" id="group-archivo">
+                    <label for="archivo">Foto o Video de la Actividad (Puede seleccionar más de 1) <span class="required-mark">*</span></label>
+                    <input type="file" id="archivo" name="archivo" accept="image/*,video/*" multiple>
+                    <span class="helper-text">Se requiere subir evidencia (imagen o video).</span>
+                    <span class="error-message">Debes seleccionar un archivo.</span>
+                </div>
+
+                <div class="form-group" id="group-enlace">
+                    <label for="enlace">Enlace a contenido propio</label>
+                    <input type="url" id="enlace" name="enlace" placeholder="Ej. https://instagram.com/mi_actividad">
+                    <span class="helper-text">Opcional. Link a red social, blog o sitio relacionado.</span>
+                    <span class="error-message">Debes ingresar un enlace válido (que inicie con http:// o https://).</span>
+                </div>
+
+                <div style="text-align: right; margin-top: 2rem;">
+                    <button type="submit" class="btn">Registrar Miembro y Actividad</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Departamento de Ciencias de la Computación - Tarea 2</p>
+    </footer>
+
+    <script>
+        // Data para select de comunas
+        const comunasData = {
+            {% for c in comunas %}
+                "{{ c.id }}": { region_id: "{{ c.region_id }}", nombre: "{{ c.nombre }}" }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        function actualizarComunas() {
+            const regionSelect = document.getElementById('region_id');
+            const comunaSelect = document.getElementById('comuna_id');
+            const regionId = regionSelect.value;
+            
+            comunaSelect.innerHTML = '<option value="">Seleccione Comuna...</option>';
+            
+            for (const [id, comuna] of Object.entries(comunasData)) {
+                if (comuna.region_id === regionId) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = comuna.nombre;
+                    comunaSelect.appendChild(option);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registroActividadForm');
+            const tipoMiembroSelect = document.getElementById('tipo_miembro');
+            const datosEspecificos = document.getElementById('datos_especificos');
+
+            if (tipoMiembroSelect) {
+                tipoMiembroSelect.addEventListener('change', (e) => {
+                    const tipo = e.target.value;
+                    datosEspecificos.style.display = 'block';
+                    
+                    let html = '';
+                    switch (tipo) {
+                        case 'estudiante_pregrado':
+                            html = `
+                                <label for="carrera">Carrera <span class="required-mark">*</span></label>
+                                <input type="text" id="carrera" name="carrera" placeholder="Ej. Ingeniería Civil en Computación">
+                                <span class="error-message">Debes ingresar la carrera (mínimo 5 caracteres).</span>
+                            `;
+                            break;
+                        case 'estudiante_postgrado':
+                            html = `
+                                <label for="programa">Programa de Postgrado <span class="required-mark">*</span></label>
+                                <input type="text" id="programa" name="programa" placeholder="Ej. Magíster en Ciencias">
+                                <span class="error-message">Debes ingresar el programa (mínimo 5 caracteres).</span>
+                            `;
+                            break;
+                        case 'funcionario':
+                            html = `
+                                <label for="cargo">Cargo <span class="required-mark">*</span></label>
+                                <input type="text" id="cargo" name="cargo" placeholder="Ej. Secretario(a)">
+                                <span class="error-message">Debes ingresar el cargo (mínimo 3 caracteres).</span>
+                            `;
+                            break;
+                        case 'academico':
+                            html = `
+                                <label for="especialidad">Especialidad/Área <span class="required-mark">*</span></label>
+                                <input type="text" id="especialidad" name="especialidad" placeholder="Ej. Ciencia de Datos">
+                                <span class="error-message">Debes ingresar la especialidad (mínimo 3 caracteres).</span>
+                            `;
+                            break;
+                        default:
+                            datosEspecificos.style.display = 'none';
+                            break;
+                    }
+                    datosEspecificos.innerHTML = html;
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    let isValid = true;
+                    // Limpiar errores
+                    document.querySelectorAll('.form-group.error').forEach(el => el.classList.remove('error'));
+
+                    // Validar Miembro
+                    const nombre = document.getElementById('nombre').value.trim();
+                    if (nombre.length < 3 || nombre.length > 50) { document.getElementById('group-nombre').classList.add('error'); isValid = false; }
+
+                    const email = document.getElementById('email').value.trim();
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('group-email').classList.add('error'); isValid = false; }
+
+                    const comuna = document.getElementById('comuna_id').value;
+                    if (!comuna) { document.getElementById('group-comuna').classList.add('error'); isValid = false; }
+
+                    const tipo = document.getElementById('tipo_miembro').value;
+                    if (!tipo) { document.getElementById('group-tipo').classList.add('error'); isValid = false; }
+                    
+                    // Actividad
+                    const nombreAct = document.getElementById('nombre_actividad').value.trim();
+                    if (nombreAct.length < 3) { document.getElementById('group-nombre-actividad').classList.add('error'); isValid = false; }
+
+                    if (!document.getElementById('tipo_actividad').value) { document.getElementById('group-tipo-actividad').classList.add('error'); isValid = false; }
+
+                    const dias = document.querySelectorAll('input[name="dias"]:checked');
+                    if (dias.length === 0) { document.getElementById('group-dias').classList.add('error'); isValid = false; }
+
+                    const horaInicio = document.getElementById('hora_inicio').value;
+                    const horaFin = document.getElementById('hora_fin').value;
+                    if (!horaInicio) { document.getElementById('group-hora-inicio').classList.add('error'); isValid = false; }
+                    if (!horaFin || horaFin <= horaInicio) { document.getElementById('group-hora-fin').classList.add('error'); isValid = false; }
+
+                    const archivo = document.getElementById('archivo').files.length;
+                    if (archivo === 0) { document.getElementById('group-archivo').classList.add('error'); isValid = false; }
+
+                    if (!isValid) {
+                        e.preventDefault(); // Solo detener envío si no es válido
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
