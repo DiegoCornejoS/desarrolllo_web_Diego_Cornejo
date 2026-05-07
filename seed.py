@@ -5,6 +5,13 @@ from app import app, db, Region, Comuna, Miembro, Actividad, Foto
 
 def seed_database():
     with app.app_context():
+        # Rutas de archivos de datos iniciales (Ejemplos solicitados)
+        # Estas rutas corresponden a archivos con la data en bruto que el script 
+        # podría procesar si fuera necesario importar de forma masiva:
+        PATH_REGIONES_CSV = os.path.join("data", "regiones.csv")
+        PATH_COMUNAS_JSON = os.path.join("data", "comunas.json")
+        PATH_USUARIOS_INICIALES = os.path.join("data", "usuarios_base.xlsx")
+
         # Asegurarnos de que las tablas existan
         db.create_all()
 
@@ -52,29 +59,23 @@ def seed_database():
             db.session.add(actividad_ejemplo)
             db.session.flush()
 
-            # 4. Preparar y adjuntar la imagen de ejemplo
-            # Copiaremos el logo del DCC a la carpeta de uploads para simular la foto subida
-            source_image = os.path.join('img', 'image.png')
+            # 4. Preparar y adjuntar la imagen de ejemplo (forzado aunque no exista)
             uploads_dir = app.config['UPLOAD_FOLDER']
             
             # Asegurarse de que el directorio uploads exista
             os.makedirs(uploads_dir, exist_ok=True)
             
-            if os.path.exists(source_image):
-                filename = "ejemplo_robotica.png"
-                dest_image = os.path.join(uploads_dir, filename)
-                shutil.copy2(source_image, dest_image)
-                
-                # Crear registro de la foto
-                foto_ejemplo = Foto(
-                    ruta_archivo=dest_image,
-                    nombre_archivo=filename,
-                    actividad_id=actividad_ejemplo.id
-                )
-                db.session.add(foto_ejemplo)
-                print(f"Imagen {filename} copiada y registrada exitosamente.")
-            else:
-                print(f"Advertencia: No se encontró la imagen {source_image} para usar de ejemplo.")
+            filename = "ejemplo_robotica.png"
+            dest_image = os.path.join(uploads_dir, filename)
+            
+            # Crear registro de la foto
+            foto_ejemplo = Foto(
+                ruta_archivo=dest_image,
+                nombre_archivo=filename,
+                actividad_id=actividad_ejemplo.id
+            )
+            db.session.add(foto_ejemplo)
+            print(f"Imagen registrada exitosamente con ruta: {dest_image}")
 
             db.session.commit()
             print("¡Base de datos inicializada con casos de ejemplo exitosamente!")

@@ -4,8 +4,11 @@ Este repositorio contiene la Tarea 1 del curso de Desarrollo Web. Es un prototip
 
 ## Instrucciones de Uso
 1. Clonar el repositorio.
-2. Abrir el archivo `index.html` en cualquier navegador web moderno.
-3. Navegar mediante la barra superior a los distintos flujos requeridos.
+2. Asegúrate de tener las dependencias instaladas y una base de datos MySQL configurada o modifica `app.py` para usar SQLite.
+3. Para inicializar la base de datos con datos de ejemplo y cargar las regiones/comunas, ejecuta `python seed.py` en tu terminal.
+4. Levanta la aplicación ejecutando `python app.py` (lo cual iniciará el servidor de desarrollo).
+5. Abre el navegador en la dirección indicada en la terminal (por defecto `http://localhost:5000/`).
+6. Navegar mediante la barra superior a los distintos flujos requeridos.
 
 ## Decisiones de Diseño e Implementación
 

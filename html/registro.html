@@ -28,9 +28,15 @@
             {% if messages %}
                 <div style="margin-bottom: 2rem;">
                 {% for category, message in messages %}
-                    <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: white; background-color: {{ '#22c55e' if category == 'success' else '#ef4444' }};">
+                    {% if category == 'success' %}
+                    <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: white; background-color: #22c55e;">
                         {{ message }}
                     </div>
+                    {% else %}
+                    <div style="padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: white; background-color: #ef4444;">
+                        {{ message }}
+                    </div>
+                    {% endif %}
                 {% endfor %}
                 </div>
             {% endif %}
@@ -70,8 +76,8 @@
                         <label for="region_id">Región <span class="required-mark">*</span></label>
                         <select id="region_id" name="region_id" onchange="actualizarComunas()">
                             <option value="">Seleccione Región...</option>
-                            {% for r in regiones %}
-                                <option value="{{ r.id }}">{{ r.nombre }}</option>
+                            {% for region in regiones %}
+                            <option value="{{ region.id }}">{{ region.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -80,10 +86,16 @@
                         <label for="comuna_id">Comuna <span class="required-mark">*</span></label>
                         <select id="comuna_id" name="comuna_id">
                             <option value="">Seleccione Comuna...</option>
-                            <!-- Se llenan por JS -->
                         </select>
                         <span class="error-message">Debes seleccionar una comuna.</span>
                     </div>
+
+                    <!-- Datos ocultos para usar con JavaScript -->
+                    <select id="all_comunas" style="display: none;">
+                        {% for comuna in comunas %}
+                        <option value="{{ comuna.id }}" data-region="{{ comuna.region_id }}">{{ comuna.nombre }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <div class="form-group" id="group-tipo">
@@ -182,31 +194,26 @@
     </footer>
 
     <script>
-        // Data para select de comunas
-        const comunasData = {
-            {% for c in comunas %}
-                "{{ c.id }}": { region_id: "{{ c.region_id }}", nombre: "{{ c.nombre }}" }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        };
-
         function actualizarComunas() {
             const regionSelect = document.getElementById('region_id');
             const comunaSelect = document.getElementById('comuna_id');
-            const regionId = regionSelect.value;
+            const allComunas = document.getElementById('all_comunas');
+            const regionNumero = regionSelect.value;
             
             comunaSelect.innerHTML = '<option value="">Seleccione Comuna...</option>';
-            
-            for (const [id, comuna] of Object.entries(comunasData)) {
-                if (comuna.region_id === regionId) {
-                    const option = document.createElement('option');
-                    option.value = id;
-                    option.textContent = comuna.nombre;
-                    comunaSelect.appendChild(option);
-                }
-            }
+            if (!regionNumero) return;
+
+            // Buscamos las comunas en el select oculto que coinciden con la región seleccionada
+            const opciones = allComunas.querySelectorAll('option[data-region="' + regionNumero + '"]');
+            opciones.forEach(opt => {
+                const nuevaOpcion = opt.cloneNode(true);
+                comunaSelect.appendChild(nuevaOpcion);
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+
+
             const form = document.getElementById('registroActividadForm');
             const tipoMiembroSelect = document.getElementById('tipo_miembro');
             const datosEspecificos = document.getElementById('datos_especificos');
