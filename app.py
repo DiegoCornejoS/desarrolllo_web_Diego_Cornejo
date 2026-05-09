@@ -25,11 +25,17 @@ class Region(db.Model):
     nombre = db.Column(db.String(200), nullable=False)
     comunas = db.relationship('Comuna', backref='region', lazy=True)
 
+    def __init__(self, **kwargs):
+        super(Region, self).__init__(**kwargs)
+
 class Comuna(db.Model):
     __tablename__ = 'comuna'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(200), nullable=False)
     region_id = db.Column(db.Integer, db.ForeignKey('region.id'), nullable=False)
+
+    def __init__(self, **kwargs):
+        super(Comuna, self).__init__(**kwargs)
 
 class Miembro(db.Model):
     __tablename__ = 'miembro'
@@ -45,6 +51,10 @@ class Miembro(db.Model):
     dato_especifico = db.Column(db.String(255), nullable=True) # Carrera, Programa, Cargo o Especialidad
     
     actividades = db.relationship('Actividad', backref='miembro', lazy=True)
+    comuna = db.relationship('Comuna', backref='miembros', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(Miembro, self).__init__(**kwargs)
 
 class Actividad(db.Model):
     __tablename__ = 'actividad'
@@ -59,12 +69,18 @@ class Actividad(db.Model):
     
     fotos = db.relationship('Foto', backref='actividad', lazy=True)
 
+    def __init__(self, **kwargs):
+        super(Actividad, self).__init__(**kwargs)
+
 class Foto(db.Model):
     __tablename__ = 'foto'
     id = db.Column(db.Integer, primary_key=True)
     ruta_archivo = db.Column(db.String(300), nullable=False)
     nombre_archivo = db.Column(db.String(300), nullable=False)
     actividad_id = db.Column(db.Integer, db.ForeignKey('actividad.id'), nullable=False)
+
+    def __init__(self, **kwargs):
+        super(Foto, self).__init__(**kwargs)
 
 
 # --- Rutas ---
@@ -141,7 +157,7 @@ def registro():
                 nombre=nombre,
                 email=email,
                 telefono=telefono,
-                comuna_id=comuna_id,
+                comuna_id=int(comuna_id),
                 tipo_miembro=tipo_miembro,
                 dato_especifico=dato_especifico,
                 fecha_registro=datetime.now()
@@ -149,8 +165,18 @@ def registro():
             db.session.add(nuevo_miembro)
             db.session.flush() # Para obtener el ID
 
-            # 2. Insertar Actividades (una por cada dia seleccionado, o una actividad con dias combinados, 
-            # según modelo la actividad tiene 1 día, asi que crearemos una por día)
+            # Guardar archivos una vez para evitar agotar el stream de archivos en el bucle de días
+            archivos_procesados = []
+            for file in archivos:
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    # Agregamos timestamp para evitar colisiones
+                    unique_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
+                    file.save(filepath)
+                    archivos_procesados.append((filepath, filename))
+
+            # 2. Insertar Actividades (una por cada día seleccionado)
             for dia in dias:
                 nueva_act = Actividad(
                     miembro_id=nuevo_miembro.id,
@@ -164,21 +190,14 @@ def registro():
                 db.session.add(nueva_act)
                 db.session.flush()
 
-                # 3. Insertar Fotos para cada actividad
-                for file in archivos:
-                    if file and file.filename:
-                        filename = secure_filename(file.filename)
-                        # Agregamos timestamp para evitar colisiones
-                        unique_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
-                        file.save(filepath)
-
-                        nueva_foto = Foto(
-                            ruta_archivo=filepath,
-                            nombre_archivo=filename,
-                            actividad_id=nueva_act.id
-                        )
-                        db.session.add(nueva_foto)
+                # 3. Asociar las fotos ya guardadas a cada actividad creada
+                for filepath, filename in archivos_procesados:
+                    nueva_foto = Foto(
+                        ruta_archivo=filepath,
+                        nombre_archivo=filename,
+                        actividad_id=nueva_act.id
+                    )
+                    db.session.add(nueva_foto)
 
             db.session.commit()
             flash("Miembro y actividades registrados con éxito.", 'success')

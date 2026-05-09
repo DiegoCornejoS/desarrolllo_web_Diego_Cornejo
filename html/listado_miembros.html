@@ -35,6 +35,8 @@
                             <th>Tipo de Miembro</th>
                             <th>Email</th>
                             <th>Teléfono</th>
+                            <th>Ubicación (Región/Comuna)</th>
+                            <th>Evidencia</th>
                             <th>Dato Específico</th>
                             <th>Fecha de Registro</th>
                         </tr>
@@ -52,6 +54,16 @@
                                 </td>
                                 <td>{{ m.email }}</td>
                                 <td>{{ m.telefono if m.telefono else '-' }}</td>
+                                <td>{{ m.comuna.region.nombre }} / {{ m.comuna.nombre }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap; max-width: 150px;">
+                                        {% for act in m.actividades %}
+                                            {% for foto in act.fotos %}
+                                                <img src="{{ url_for('static', filename=foto.ruta_archivo) }}" alt="Foto" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
                                 <td>{{ m.dato_especifico }}</td>
                                 <td>{{ m.fecha_registro.strftime('%d-%m-%Y %H:%M') }}</td>
                             </tr>
