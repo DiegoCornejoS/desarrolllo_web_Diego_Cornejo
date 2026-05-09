@@ -43,12 +43,12 @@
         {% endwith %}
 
         <div class="card" style="max-width: 900px;">
-            <h2>Registro de Miembros y sus Actividades</h2>
+            <h1>Registro de Miembros y sus Actividades</h1>
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Ingresa tus datos y al menos una actividad. Los campos con <span style="color: var(--error-color);">*</span> son obligatorios.</p>
             
             <form id="registroActividadForm" method="POST" enctype="multipart/form-data" novalidate action="{{ url_for('registro') }}">
                 
-                <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Datos del Miembro</h3>
+                <h2 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Datos del Miembro</h2>
                 
                 <div class="form-group" id="group-nombre">
                     <label for="nombre">Nombre Completo <span class="required-mark">*</span></label>
@@ -115,7 +115,7 @@
                 </div>
 
 
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Informar Actividad</h3>
+                <h2 style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Informar Actividad</h2>
 
                 <div class="form-row">
                     <div class="form-group" id="group-nombre-actividad">
