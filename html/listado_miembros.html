@@ -59,8 +59,9 @@
                                     <div style="display: flex; gap: 4px; flex-wrap: wrap; max-width: 150px;">
                                         {% for act in m.actividades %}
                                             {% for foto in act.fotos %}
-                                                <img src="{{ url_for('static', filename=foto.ruta_archivo) }}" alt="Foto" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">
+                                                <img src="/{{ foto.ruta_archivo }}" alt="Foto" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">
                                             {% endfor %}
+
                                         {% endfor %}
                                     </div>
                                 </td>

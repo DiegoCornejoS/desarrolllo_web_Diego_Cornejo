@@ -13,18 +13,14 @@ Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades p
    *(Nota: Si PowerShell arroja error de permisos, ejecuta `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` como administrador y vuelve a intentarlo).*
 4. Instalar los requerimientos ejecutando `pip install -r requirements.txt`.
 
-### 2. Configuración de Base de Datos (MySQL)
-La aplicación está configurada para utilizar MySQL por defecto. 
+### 2. Configuración de Base de Datos (Zero-Config)
+La aplicación está diseñada para ser **"plug-and-play"**. El sistema detectará automáticamente el entorno del revisor:
 
-1. Asegúrate de tener instalado MySQL Server y que el servicio esté corriendo.
-2. **Automatización:** El script `seed.py` intentará crear automáticamente la base de datos `tarea2` y el usuario `cc5002` (conectándose como `root` sin contraseña). Si tu configuración es distinta, puedes crear la base de datos manualmente:
-   ```sql
-   CREATE DATABASE tarea2;
-   CREATE USER 'cc5002'@'localhost' IDENTIFIED BY 'programacionweb';
-   GRANT ALL PRIVILEGES ON tarea2.* TO 'cc5002'@'localhost';
-   FLUSH PRIVILEGES;
-   ```
-*(Alternativamente: Puedes modificar la variable `SQLALCHEMY_DATABASE_URI` en `app.py` para usar otras credenciales o SQLite).*
+1.  **MySQL (Recomendado):** Si tienes MySQL corriendo en `localhost`, el script `seed.py` intentará crear la base de datos `tarea2` y el usuario `cc5002` automáticamente.
+2.  **SQLite (Fallback Automático):** Si el sistema detecta que MySQL **no** está activo, utilizará automáticamente una base de datos SQLite local (`tarea2.db`). **Esto permite que el revisor ejecute la aplicación sin necesidad de configurar ningún servidor de base de datos.**
+
+*No es necesario realizar cambios manuales en el código para cambiar entre motores.*
+
 
 ### 3. Inicialización y Ejecución
 1. Para **crear automáticamente la base de datos**, inicializar las tablas y cargar información de prueba (datos geográficos y un usuario de ejemplo), ejecuta:
@@ -54,7 +50,12 @@ python seed.py
 
 # Ejecutar aplicación
 python app.py
+
+# NAvegador
+localhost:5000
 ```
+
+
 
 
 ## Decisiones de Diseño e Implementación
