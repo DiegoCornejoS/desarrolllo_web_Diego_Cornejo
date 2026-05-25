@@ -28,24 +28,38 @@
 
     <main>
         <div style="max-width: 1000px; margin: 0 auto;">
-            <h1 style="margin-bottom: 2rem; color: var(--text-main); text-align: center;">Indicadores y Métricas</h1>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">(Nota: Según la Tarea 2, las funcionalidades de estadísticas quedan pendientes para la siguiente tarea, por lo que estos gráficos son demostrativos estáticos de la Tarea 1).</p>
+            <h1 style="margin-bottom: 1rem; color: var(--text-main); text-align: center;">Indicadores y Métricas</h1>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Visualización de estadísticas en tiempo real acerca de la comunidad y sus actividades.</p>
+            
             <div class="charts-grid">
-                <!-- Gráfico de Miembros por Tipo -->
-                <div class="chart-card">
-                    <h2 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Miembros por Tipo</h2>
+                <!-- Gráfico 1: Miembros por Día (Líneas) -->
+                <div class="chart-card" style="grid-column: span 2; @media(max-width: 768px) { grid-column: auto; }">
+                    <h2 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Cantidad de Miembros Registrados por Día</h2>
                     <div class="chart-container">
-                        <canvas id="miembrosChart"></canvas>
+                        <canvas id="miembrosPorDiaChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Gráfico de Actividades por Categoría -->
+                <!-- Gráfico 2: Actividades por Tipo (Torta) -->
                 <div class="chart-card">
-                    <h2 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Actividades por Categoría</h2>
+                    <h2 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Actividades Extraprogramáticas por Tipo</h2>
                     <div class="chart-container">
-                        <canvas id="actividadesChart"></canvas>
+                        <canvas id="actividadesPorTipoChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Gráfico 3: Actividades por Comuna (Barras) -->
+                <div class="chart-card">
+                    <h2 style="text-align: center; color: var(--secondary-color); margin-bottom: 1rem;">Actividades Registradas por Comuna</h2>
+                    <div class="chart-container">
+                        <canvas id="actividadesPorComunaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enlace para volver a la portada -->
+            <div style="margin-top: 3rem; text-align: center; margin-bottom: 2rem;">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 0.75rem 2rem;">Volver a la Portada</a>
             </div>
         </div>
     </main>

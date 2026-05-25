@@ -1,8 +1,9 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy import func
 
 app = Flask(__name__, template_folder='html', static_folder='.', static_url_path='')
 app.secret_key = 'super_secret_key'
@@ -96,6 +97,19 @@ class Foto(db.Model):
 
     def __init__(self, **kwargs):
         super(Foto, self).__init__(**kwargs)
+
+class Comentario(db.Model):
+    __tablename__ = 'comentario'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(80), nullable=False)
+    texto = db.Column(db.String(300), nullable=False)
+    fecha = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    actividad_id = db.Column(db.Integer, db.ForeignKey('actividad.id'), nullable=False)
+    
+    actividad = db.relationship('Actividad', backref=db.backref('comentarios', lazy=True, cascade="all, delete-orphan"))
+
+    def __init__(self, **kwargs):
+        super(Comentario, self).__init__(**kwargs)
 
 
 # --- Rutas ---
@@ -238,12 +252,19 @@ def registro():
 def listado():
     try:
         page = request.args.get('page', 1, type=int)
+        tipo_filter = request.args.get('tipo', '').strip()
+        
+        query = Miembro.query
+        if tipo_filter:
+            query = query.filter_by(tipo_miembro=tipo_filter)
+            
+        query = query.order_by(Miembro.nombre)
         # Paginación básica: 5 por página
-        miembros_paginados = Miembro.query.order_by(Miembro.nombre).paginate(page=page, per_page=5, error_out=False)
-        return render_template('listado_miembros.html', miembros=miembros_paginados.items, pagination=miembros_paginados)
+        miembros_paginados = query.paginate(page=page, per_page=5, error_out=False)
+        return render_template('listado_miembros.html', miembros=miembros_paginados.items, pagination=miembros_paginados, tipo_actual=tipo_filter)
     except Exception as e:
         print("DB error:", e)
-        return render_template('listado_miembros.html', miembros=[], pagination=None)
+        return render_template('listado_miembros.html', miembros=[], pagination=None, tipo_actual='')
 
 @app.route('/img/uploads/<path:filename>')
 def serve_uploads(filename):
@@ -254,6 +275,110 @@ def serve_uploads(filename):
 def indicadores():
     # En la Tarea 2 las estadísticas quedan pendientes, pero la ruta existe
     return render_template('indicadores.html')
+
+# --- Nuevas Rutas y APIs para Tarea 3 ---
+
+@app.route('/miembro/<int:miembro_id>')
+def detalle_miembro(miembro_id):
+    miembro = Miembro.query.get_or_404(miembro_id)
+    return render_template('detalle_miembro.html', miembro=miembro)
+
+@app.route('/actividad/<int:actividad_id>')
+def detalle_actividad(actividad_id):
+    actividad = Actividad.query.get_or_404(actividad_id)
+    return render_template('detalle_actividad.html', actividad=actividad)
+
+@app.route('/api/actividad/<int:actividad_id>/comentarios', methods=['GET', 'POST'])
+def api_comentarios(actividad_id):
+    actividad = Actividad.query.get_or_404(actividad_id)
+    if request.method == 'POST':
+        data = request.get_json() or request.form
+        nombre = data.get('nombre', '').strip()
+        texto = data.get('texto', '').strip()
+        
+        errores = []
+        if not nombre or len(nombre) < 3 or len(nombre) > 80:
+            errores.append("El nombre del comentarista debe tener entre 3 y 80 caracteres.")
+        if not texto or len(texto) < 5 or len(texto) > 300:
+            errores.append("El texto del comentario debe tener al menos 5 caracteres (máximo 300).")
+            
+        if errores:
+            return jsonify({'success': False, 'errors': errores}), 400
+            
+        try:
+            nuevo_comentario = Comentario(
+                nombre=nombre,
+                texto=texto,
+                fecha=datetime.now(),
+                actividad_id=actividad_id
+            )
+            db.session.add(nuevo_comentario)
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'comentario': {
+                    'id': nuevo_comentario.id,
+                    'nombre': nuevo_comentario.nombre,
+                    'texto': nuevo_comentario.texto,
+                    'fecha': nuevo_comentario.fecha.strftime('%d-%m-%Y %H:%M')
+                }
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'errors': [f"Error de base de datos: {str(e)}"]}), 500
+            
+    # GET: Listar comentarios
+    comentarios = Comentario.query.filter_by(actividad_id=actividad_id).order_by(Comentario.fecha.desc()).all()
+    comentarios_json = [{
+        'id': c.id,
+        'nombre': c.nombre,
+        'texto': c.texto,
+        'fecha': c.fecha.strftime('%d-%m-%Y %H:%M')
+    } for c in comentarios]
+    return jsonify(comentarios_json)
+
+@app.route('/api/estadisticas/miembros-por-dia')
+def api_miembros_por_dia():
+    try:
+        # Agrupamos por fecha de registro
+        resultados = db.session.query(
+            func.date(Miembro.fecha_registro).label('dia'),
+            func.count(Miembro.id).label('cantidad')
+        ).group_by(func.date(Miembro.fecha_registro)).order_by(func.date(Miembro.fecha_registro)).all()
+        
+        datos = [{'dia': r.dia, 'cantidad': r.cantidad} for r in resultados]
+        return jsonify(datos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/estadisticas/actividades-por-tipo')
+def api_actividades_por_tipo():
+    try:
+        resultados = db.session.query(
+            Actividad.tipo.label('tipo'),
+            func.count(Actividad.id).label('cantidad')
+        ).group_by(Actividad.tipo).all()
+        
+        datos = [{'tipo': r.tipo, 'cantidad': r.cantidad} for r in resultados]
+        return jsonify(datos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/estadisticas/actividades-por-comuna')
+def api_actividades_por_comuna():
+    try:
+        # Comunas que tienen miembros y el conteo de actividades de esos miembros
+        resultados = db.session.query(
+            Comuna.nombre.label('comuna'),
+            func.count(Actividad.id).label('cantidad')
+        ).join(Miembro, Miembro.comuna_id == Comuna.id) \
+         .join(Actividad, Actividad.miembro_id == Miembro.id) \
+         .group_by(Comuna.nombre).order_by(Comuna.nombre).all()
+         
+        datos = [{'comuna': r.comuna, 'cantidad': r.cantidad} for r in resultados]
+        return jsonify(datos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Para poder crear las tablas la primera vez (si MySQL está configurado)

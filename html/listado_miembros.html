@@ -27,6 +27,20 @@
         <div style="max-width: 1000px; margin: 0 auto;">
             <h2 style="margin-bottom: 1.5rem; color: var(--text-main);">Directorio de la Comunidad</h2>
 
+            <!-- Barra de Filtros de Miembros -->
+            <form method="GET" action="{{ url_for('listado') }}" class="filters" style="margin-bottom: 2rem;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 300px;">
+                    <label for="tipo" style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--secondary-color);">Filtrar por Tipo de Miembro</label>
+                    <select id="tipo" name="tipo" onchange="this.form.submit()" style="padding: 0.5rem 1rem;">
+                        <option value="" {% if not tipo_actual %}selected{% endif %}>Todos los miembros</option>
+                        <option value="estudiante_pregrado" {% if tipo_actual == 'estudiante_pregrado' %}selected{% endif %}>Estudiante Pregrado</option>
+                        <option value="estudiante_postgrado" {% if tipo_actual == 'estudiante_postgrado' %}selected{% endif %}>Estudiante Postgrado</option>
+                        <option value="funcionario" {% if tipo_actual == 'funcionario' %}selected{% endif %}>Funcionario</option>
+                        <option value="academico" {% if tipo_actual == 'academico' %}selected{% endif %}>Académico</option>
+                    </select>
+                </div>
+            </form>
+
             <div class="table-container">
                 <table>
                     <thead>
@@ -44,7 +58,7 @@
                     <tbody>
                         {% if miembros %}
                             {% for m in miembros %}
-                            <tr style="cursor: pointer;" onclick="window.location.href='#'" title="Haz clic para ver actividades (pendiente en tarea actual)">
+                            <tr style="cursor: pointer;" onclick="window.location.href='{{ url_for('detalle_miembro', miembro_id=m.id) }}'" title="Haz clic para ver sus detalles y actividades">
                                 <td>{{ m.nombre }}</td>
                                 <td>
                                     {% if m.tipo_miembro == 'estudiante_pregrado' %}<span class="badge estudiante">Est. Pregrado</span>
@@ -81,7 +95,7 @@
             {% if pagination %}
             <div class="pagination">
                 {% if pagination.has_prev %}
-                <a href="{{ url_for('listado', page=pagination.prev_num) }}" class="page-btn">&laquo; Anterior</a>
+                <a href="{{ url_for('listado', page=pagination.prev_num, tipo=tipo_actual) }}" class="page-btn">&laquo; Anterior</a>
                 {% else %}
                 <button class="page-btn" disabled>&laquo; Anterior</button>
                 {% endif %}
@@ -91,7 +105,7 @@
                         {% if pagination.page == page_num %}
                         <button class="page-btn active">{{ page_num }}</button>
                         {% else %}
-                        <a href="{{ url_for('listado', page=page_num) }}" class="page-btn">{{ page_num }}</a>
+                        <a href="{{ url_for('listado', page=page_num, tipo=tipo_actual) }}" class="page-btn">{{ page_num }}</a>
                         {% endif %}
                     {% else %}
                         <span style="padding: 0.5rem 1rem;">...</span>
@@ -99,7 +113,7 @@
                 {% endfor %}
 
                 {% if pagination.has_next %}
-                <a href="{{ url_for('listado', page=pagination.next_num) }}" class="page-btn">Siguiente &raquo;</a>
+                <a href="{{ url_for('listado', page=pagination.next_num, tipo=tipo_actual) }}" class="page-btn">Siguiente &raquo;</a>
                 {% else %}
                 <button class="page-btn" disabled>Siguiente &raquo;</button>
                 {% endif %}

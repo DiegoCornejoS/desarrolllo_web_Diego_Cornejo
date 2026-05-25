@@ -1,6 +1,38 @@
-# Sistema de Gestión de Actividades DCC
+# Sistema de Gestión de Actividades DCC - Tarea 3
 
-Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python) y una base de datos MySQL gestionada a través de SQLAlchemy.
+Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python) y una base de datos MySQL gestionada a través de SQLAlchemy, con soporte para fallbacks automáticos.
+
+**En esta versión (Tarea 3), se han implementado e integrado funcionalidades interactivas asíncronas (AJAX) del lado del cliente y del lado del servidor.**
+
+---
+
+## Nuevas Características (Tarea 3)
+
+### 1. Indicadores y Estadísticas Dinámicas (AJAX + Chart.js)
+*   Se eliminaron los gráficos mockeados estáticos y se sustituyeron por **3 gráficos interactivos en tiempo real** en la sección `/indicadores`:
+    *   **Gráfico de Líneas:** Muestra la cantidad de miembros registrados por día de forma cronológica.
+    *   **Gráfico de Torta:** Representa el total de actividades extraprogramáticas distribuidas por su tipo.
+    *   **Gráfico de Barras:** Despliega las comunas que poseen miembros registrados en el eje X, y la cantidad total de actividades que corresponden a miembros de dicha comuna en el eje Y.
+*   **Implementación AJAX:** Los gráficos se generan asíncronamente en el lado del cliente mediante la **API `fetch()`**, que consulta endpoints REST JSON estructurados en Flask (`/api/estadisticas/*`).
+*   Se configuraron los colores de Chart.js para respetar armoniosamente las variables de estilo de la aplicación basada en la paleta oficial del DCC.
+*   Se agregó un enlace de retorno explícito y estilizado al final de la pantalla para volver al inicio del sistema.
+
+### 2. Sistema de Comentarios Asíncronos en Actividades
+*   **Persistencia (Base de Datos):** Integración de la tabla `comentario` en base al modelo SQLAlchemy de Python, que representa fielmente el esquema SQL provisto (`id`, `nombre`, `texto`, `fecha`, `actividad_id`).
+*   **Navegación de Detalle:** Al hacer clic en un miembro del directorio, se accede a `/miembro/<id>` para ver sus detalles y su grilla de actividades. Al pulsar en una actividad, se redirige a `/actividad/<id>` donde se encuentra la ficha específica y su respectiva caja de comentarios.
+*   **Listado de Comentarios Asíncrono:** Al cargar el detalle de una actividad, JavaScript ejecuta una petición AJAX `GET` a `/api/actividad/<id>/comentarios` para renderizar en tiempo real el listado con fecha, nombre y texto.
+*   **Formulario con Doble Validación y Envío AJAX (POST):**
+    *   **Validación en Cliente:** Antes de enviar, JS verifica que el nombre tenga entre 3 y 80 caracteres y el texto al menos 5. Si falla, muestra avisos inline en el DOM en rojo sin realizar la petición, manteniendo el formulario visible y los datos intactos.
+    *   **Validación en Servidor:** Si pasa la validación local, se envía una petición AJAX `POST` con formato JSON. El backend en Flask valida nuevamente los datos en el servidor. Si falla, retorna status `400` y el cliente dibuja los mensajes de error manteniéndolos en pantalla para su corrección.
+    *   **Éxito de Registro:** Al registrarse con éxito, se limpia el formulario, se muestra una alerta visual temporal de éxito y **se inyecta dinámicamente el comentario al inicio del listado en el DOM al instante** sin recargar la página.
+    *   **Sanitización (Seguridad):** Se programó una función de escape HTML nativa en la inyección de comentarios para prevenir cualquier vulnerabilidad de inyección de scripts (XSS).
+
+### 3. Filtro de Miembros con Conservación de Paginación (Feedback Tarea 1)
+*   Se implementó un **menú de selección de filtros por tipo de miembro** en el directorio de la comunidad (`/listado`).
+*   El filtro interactúa de manera dinámica con la base de datos a través de Flask.
+*   **Preservación de Estado:** Se diseñó el sistema de paginación para que, al navegar por las páginas anteriores y siguientes, el filtro activo (`tipo=...`) persista en los parámetros de la URL, evitando que el listado se restablezca.
+
+---
 
 ## Instrucciones de Uso
 
@@ -14,29 +46,22 @@ Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades p
 4. Instalar los requerimientos ejecutando `pip install -r requirements.txt`.
 
 ### 2. Configuración de Base de Datos (Zero-Config)
-La aplicación está diseñada para ser **"plug-and-play"**. El sistema detectará automáticamente el entorno del revisor:
-
-1.  **MySQL (Recomendado):** Si tienes MySQL corriendo en `localhost`, el script `seed.py` intentará crear la base de datos `tarea2` y el usuario `cc5002` automáticamente.
-2.  **SQLite (Fallback Automático):** Si el sistema detecta que MySQL **no** está activo, utilizará automáticamente una base de datos SQLite local (`tarea2.db`). **Esto permite que el revisor ejecute la aplicación sin necesidad de configurar ningún servidor de base de datos.**
-
-*No es necesario realizar cambios manuales en el código para cambiar entre motores.*
-
+La aplicación está diseñada para ser **"plug-and-play"**:
+1.  **MySQL (Recomendado):** Si tienes MySQL corriendo en `localhost` con las credenciales por defecto, el script `seed.py` configurará la base de datos `tarea2` y el usuario `cc5002` automáticamente.
+2.  **SQLite (Fallback Automático):** Si MySQL no está disponible, utilizará de manera automática una base de datos local SQLite (`tarea2.db`). **Esto permite que el revisor ejecute la aplicación de inmediato sin configurar ningún servidor de base de datos.**
 
 ### 3. Inicialización y Ejecución
-1. Para **crear automáticamente la base de datos**, inicializar las tablas y cargar información de prueba (datos geográficos y un usuario de ejemplo), ejecuta:
+1. Para **crear automáticamente las tablas (incluyendo la nueva tabla `comentario`)** y cargar información geográfica e inicial de prueba, ejecute:
    ```bash
    python seed.py
    ```
-   *Nota: `seed.py` se encargará de todo el setup inicial: creación de la DB (si es posible), creación de tablas, inserción de datos base y preparación de carpetas de subida.*
 2. Levanta la aplicación ejecutando el servidor de desarrollo:
    ```bash
    python app.py
    ```
-3. Abre tu navegador web en la dirección indicada en la terminal (por defecto `http://localhost:5000/`).
-4. Navega mediante la barra superior a los distintos flujos requeridos.
+3. Abre tu navegador web en `http://localhost:5000/`.
 
-### 4. Guía Rápida de Comandos (Resumen)
-Para una puesta en marcha rápida en Windows (PowerShell), ejecuta:
+### 4. Guía Rápida de Comandos en Windows (PowerShell)
 ```powershell
 # Crear y activar entorno
 python -m venv venv
@@ -45,33 +70,35 @@ python -m venv venv
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Configurar DB e inicializar datos
+# Configurar DB e inicializar tablas (incluye comentario)
 python seed.py
 
 # Ejecutar aplicación
 python app.py
 
-# NAvegador
+# Navegador
 localhost:5000
 ```
 
-
-
+---
 
 ## Decisiones de Diseño e Implementación
 
-- **Estructura y Semántica:** Se utilizó HTML5 con etiquetas semánticas (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`) para mejorar la accesibilidad y reducir el uso innecesario de `<div>`.
-- **CSS y Diseño:** Se diseñó todo desde cero (Vanilla CSS). **La paleta de colores se basó estrictamente en el logo institucional del DCC** (presente en `/img/image.png`), utilizando su característico color rojo y tonos grises oscuros. Se utilizaron variables CSS nativas (`:root`) para mantener la consistencia en el esquema de colores.
-- **Validaciones JS:** Acatando la pauta, no se utilizó el atributo `required` ni validaciones nativas de HTML5 que detengan el flujo del formulario. Todas las validaciones (campos obligatorios, regex de emails, rangos de fechas, presencia de archivos) se implementaron en JavaScript puro (`js/validations.js`). Las alertas de error se muestran de manera responsiva justo debajo de los campos correspondientes, en color rojo y cambiando el borde del input para mejor feedback visual.
-- **Gráficos (Indicadores):** Para la sección de métricas, opté por usar la librería `Chart.js` (cargada por CDN) para lograr representaciones gráficas modernas (un gráfico de torta y uno de barras). 
-- **Responsive Design:** La aplicación cuenta con media queries en `styles.css` para adaptarse a dispositivos móviles, cambiando diseños basados en filas a columnas según el ancho de la pantalla.
-- **Formularios Dinámicos:** En el registro de miembros, la interfaz reacciona al tipo seleccionado mostrando un campo u otro usando JavaScript puro, brindando una experiencia dinámica acorde a los datos de la persona (estudiante, funcionario, académico).
+*   **HTML5 y CSS3 W3C:** Se respetó al máximo la semántica estructural y no se usaron validaciones nativas obstructivas en los formularios. El diseño se adaptó de forma responsiva para móviles.
+*   **AJAX Nativo (Fetch API):** Para toda la comunicación asíncrona (comentarios y estadísticas) se optó por la API nativa de JavaScript `fetch()`, asegurando un código moderno estructurado basado en promesas sin necesidad de cargar pesadas librerías externas de terceros.
+*   **Limpieza de Rastros:** Todos los comentarios de código están documentados en idioma español técnico y con un enfoque profesional estándar de la industria.
+
+---
 
 ## Estructura de Archivos
-- `app.py` - Archivo principal del backend en Flask y configuración de rutas
-- `seed.py` - Script de inicialización y poblado de la base de datos
-- `requirements.txt` - Dependencias de Python necesarias para el proyecto
-- `css/styles.css` - Estilos globales
-- `js/validations.js` - Lógica de validación de todos los formularios
-- `js/charts.js` - Renderizado de gráficos en el dashboard
-- `html/` - Plantillas HTML (registro, listados e indicadores)
+
+*   `app.py` - Archivo principal del backend en Flask, modelos SQLAlchemy (incluyendo `Comentario`) y controladores/APIs JSON.
+*   `seed.py` - Script de inicialización y poblado automático de tablas.
+*   `requirements.txt` - Dependencias de Python.
+*   `css/styles.css` - Estilos responsivos globales de la aplicación.
+*   `js/charts.js` - Controlador asíncrono Fetch que gestiona e interactúa con Chart.js.
+*   `js/comentarios.js` - Lógica AJAX Fetch para la carga, validación cliente y posteo asíncrono de comentarios.
+*   `html/listado_miembros.html` - Directorio con buscador y paginación persistente.
+*   `html/detalle_miembro.html` - Perfil de miembro y grilla dinámica de actividades.
+*   `html/detalle_actividad.html` - Ficha de actividad y sección de comentarios AJAX.
+*   `html/indicadores.html` - Tablero de estadísticas con soporte para los 3 gráficos interactivos.

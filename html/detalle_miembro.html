@@ -1,32 +1,151 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>Detalle Miembro</title>
-    <link rel="stylesheet" href="../css/styles.css">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de {{ miembro.nombre }} - DCC Actividades</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header>
+        <nav>
+            <a href="{{ url_for('index') }}" class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                DCC Actividades
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('registro') }}">Registrar Miembro y Actividad</a></li>
+                <li><a href="{{ url_for('listado') }}">Listado de Miembros</a></li>
+                <li><a href="{{ url_for('indicadores') }}">Estadísticas</a></li>
+            </ul>
+        </nav>
+    </header>
 
-<header>
-    <img src="../img/logo.png" alt="Logo del sitio">
-    <nav>
-        <a href="index.html">Inicio</a>
-    </nav>
-</header>
+    <main>
+        <div style="max-width: 900px; margin: 0 auto;">
+            
+            <!-- Tarjeta de Perfil del Miembro -->
+            <div class="card" style="margin-bottom: 3rem; position: relative; overflow: hidden; border-left: 5px solid var(--primary-color);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h1 style="color: var(--text-main); margin-bottom: 0.5rem;">{{ miembro.nombre }}</h1>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+                            Registrado el {{ miembro.fecha_registro.strftime('%d-%m-%Y a las %H:%M') }}
+                        </p>
+                    </div>
+                    <div>
+                        {% if miembro.tipo_miembro == 'estudiante_pregrado' %}
+                            <span class="badge estudiante" style="font-size: 1rem; padding: 0.4rem 1rem;">Estudiante Pregrado</span>
+                        {% elif miembro.tipo_miembro == 'estudiante_postgrado' %}
+                            <span class="badge estudiante" style="font-size: 1rem; padding: 0.4rem 1rem;">Estudiante Postgrado</span>
+                        {% elif miembro.tipo_miembro == 'funcionario' %}
+                            <span class="badge funcionario" style="font-size: 1rem; padding: 0.4rem 1rem;">Funcionario</span>
+                        {% else %}
+                            <span class="badge academico" style="font-size: 1rem; padding: 0.4rem 1rem;">Académico</span>
+                        {% endif %}
+                    </div>
+                </div>
 
-<div class="container">
-    <h1>Detalle del Miembro</h1>
+                <div class="form-row" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <p style="margin-bottom: 0.75rem;"><strong>Contacto:</strong></p>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                ✉️ <a href="mailto:{{ miembro.email }}" style="color: var(--primary-color); text-decoration: none;">{{ miembro.email }}</a>
+                            </li>
+                            {% if miembro.telefono %}
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                📞 <a href="tel:{{ miembro.telefono }}" style="color: var(--text-main); text-decoration: none;">{{ miembro.telefono }}</a>
+                            </li>
+                            {% endif %}
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                📍 {{ miembro.comuna.region.nombre }} / {{ miembro.comuna.nombre }}
+                            </li>
+                        </ul>
+                    </div>
 
-    <p><b>Nombre:</b> Juan Pérez</p>
-    <p><b>Tipo:</b> Estudiante</p>
-    <p><b>Email:</b> juan@mail.com</p>
+                    <div style="flex: 1; min-width: 250px;">
+                        <p style="margin-bottom: 0.75rem;"><strong>Detalles Institucionales:</strong></p>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li style="margin-bottom: 0.5rem;">
+                                {% if miembro.tipo_miembro == 'estudiante_pregrado' %}
+                                    <strong>Carrera:</strong> {{ miembro.dato_especifico }}
+                                {% elif miembro.tipo_miembro == 'estudiante_postgrado' %}
+                                    <strong>Programa:</strong> {{ miembro.dato_especifico }}
+                                {% elif miembro.tipo_miembro == 'funcionario' %}
+                                    <strong>Cargo:</strong> {{ miembro.dato_especifico }}
+                                {% else %}
+                                    <strong>Especialidad:</strong> {{ miembro.dato_especifico }}
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
-    <h2>Actividades</h2>
+            <!-- Listado de Actividades -->
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+                Actividades Registradas
+            </h2>
 
-    <ul>
-        <li>Fútbol - Lunes 18:00</li>
-    </ul>
-</div>
+            {% if miembro.actividades %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    {% for act in miembro.actividades %}
+                        <div class="chart-card" style="display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-color); transition: var(--transition);">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                    <span class="badge" style="background-color: #f1f5f9; color: var(--secondary-color); text-transform: capitalize; font-size: 0.8rem;">
+                                        {{ act.tipo }}
+                                    </span>
+                                    <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: capitalize;">
+                                        {{ act.dia }}
+                                    </span>
+                                </div>
+                                <h3 style="margin-bottom: 0.5rem; color: var(--text-main); font-size: 1.2rem;">{{ act.nombre }}</h3>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                                    Horario: de <strong>{{ act.hora_inicio }}</strong> a <strong>{{ act.hora_fin }}</strong>
+                                </p>
+                                
+                                {% if act.enlace %}
+                                <p style="font-size: 0.85rem; margin-bottom: 1rem;">
+                                    🔗 Enlace: <a href="{{ act.enlace }}" target="_blank" style="color: var(--primary-color); word-break: break-all;">{{ act.enlace }}</a>
+                                </p>
+                                {% endif %}
 
+                                <!-- Fotos/Evidencia -->
+                                {% if act.fotos %}
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                                        {% for foto in act.fotos %}
+                                            <img src="/{{ foto.ruta_archivo }}" alt="Evidencia" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <a href="{{ url_for('detalle_actividad', actividad_id=act.id) }}" class="btn" style="width: 100%; font-size: 0.9rem; padding: 0.6rem 1rem;">
+                                Ver Detalles y Comentarios ({{ act.comentarios|length }})
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    No hay actividades extracurriculares registradas para este miembro.
+                </div>
+            {% endif %}
+
+            <!-- Botón de retorno -->
+            <div style="margin-top: 3rem; text-align: center;">
+                <a href="{{ url_for('listado') }}" class="btn btn-secondary" style="padding: 0.75rem 2rem;">Volver al Directorio</a>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Departamento de Ciencias de la Computación - Tarea 3</p>
+    </footer>
 </body>
 </html>
