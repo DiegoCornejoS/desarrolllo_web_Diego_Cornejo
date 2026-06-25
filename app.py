@@ -1,12 +1,12 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import func
 
 app = Flask(__name__, template_folder='html', static_folder='.', static_url_path='')
-app.secret_key = 'super_secret_key'
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Configuración de BD dinámica para facilitar la revisión
 def get_db_uri():
@@ -33,6 +33,19 @@ db = SQLAlchemy(app)
 UPLOAD_FOLDER = 'img/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Seguridad: límite de tamaño de archivos subidos (16 MB)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+# Seguridad: extensiones de archivo permitidas (whitelist)
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+
+def archivo_permitido(filename):
+    """Verifica que la extensión del archivo esté en la whitelist."""
+    if not filename:
+        return False
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
 
 # --- Modelos SQLAlchemy ---
 class Region(db.Model):
@@ -127,6 +140,13 @@ def index():
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
+        # Seguridad: Validación CSRF
+        token_recibido = request.form.get('csrf_token')
+        token_sesion = session.get('csrf_token')
+        if not token_recibido or not token_sesion or token_recibido != token_sesion:
+            flash("Error de seguridad: Token CSRF inválido o expirado. Por favor, intente nuevamente.", "error")
+            return redirect(url_for('registro'))
+
         # Procesar Formulario
         nombre = request.form.get('nombre')
         email = request.form.get('email')
@@ -199,6 +219,10 @@ def registro():
             for file in archivos:
                 if file and file.filename:
                     filename = secure_filename(file.filename)
+                    # Seguridad: validar extensión contra whitelist
+                    if not archivo_permitido(filename):
+                        flash(f"Archivo '{filename}' rechazado: solo se permiten imágenes (JPG, PNG, GIF, WEBP).", 'error')
+                        return render_template('registro.html', regiones=Region.query.all(), comunas=Comuna.query.all())
                     # Agregamos timestamp para evitar colisiones
                     unique_name = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
@@ -234,7 +258,9 @@ def registro():
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Error en la base de datos: {str(e)}", 'error')
+            # Seguridad: no exponer detalles internos del error al usuario
+            print(f"Error en la base de datos (registro): {e}")
+            flash("Error interno al procesar el registro. Por favor, intente nuevamente.", 'error')
             return render_template('registro.html', regiones=Region.query.all(), comunas=Comuna.query.all())
 
     # GET request
@@ -246,7 +272,12 @@ def registro():
         regiones = []
         comunas = []
         
-    return render_template('registro.html', regiones=regiones, comunas=comunas)
+    # Seguridad: Generar token CSRF para el formulario
+    import secrets
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(24)
+        
+    return render_template('registro.html', regiones=regiones, comunas=comunas, csrf_token=session['csrf_token'])
 
 @app.route('/listado')
 def listado():
@@ -325,7 +356,9 @@ def api_comentarios(actividad_id):
             }), 201
         except Exception as e:
             db.session.rollback()
-            return jsonify({'success': False, 'errors': [f"Error de base de datos: {str(e)}"]}), 500
+            # Seguridad: no exponer detalles internos del error al usuario
+            print(f"Error de base de datos (comentarios): {e}")
+            return jsonify({'success': False, 'errors': ["Error interno al guardar el comentario."]}), 500
             
     # GET: Listar comentarios
     comentarios = Comentario.query.filter_by(actividad_id=actividad_id).order_by(Comentario.fecha.desc()).all()
@@ -387,4 +420,6 @@ if __name__ == '__main__':
             db.create_all()
         except Exception as e:
             print("No se pudieron crear las tablas:", e)
-    app.run(debug=True, port=5000)
+    # Seguridad: debug mode controlado por variable de entorno
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1', 'yes')
+    app.run(debug=debug_mode, port=5000)

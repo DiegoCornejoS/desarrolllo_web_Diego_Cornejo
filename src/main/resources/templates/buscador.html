@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Actividades</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
+        .actividad-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        .highlight { background-color: yellow; font-weight: bold; }
+        .btn-evaluar { background-color: #007bff; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        .btn-evaluar:hover { background-color: #0056b3; }
+        .nota-badge { background-color: #28a745; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+        .msg-empty { color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Buscador de Actividades</h1>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Escribe al menos 3 caracteres para buscar por nombre, tipo o comuna...">
+    </div>
+
+    <div id="resultadosContainer">
+        <!-- Los resultados se inyectarán aquí asíncronamente -->
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const resultadosContainer = document.getElementById('resultadosContainer');
+
+    // Funciones de escape para seguridad (XSS y Regex)
+    const escapeHTML = (str) => {
+        if (str === null || str === undefined) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function highlightText(text, query) {
+        if (!text) return "";
+        let escapedText = escapeHTML(text);
+        if (!query) return escapedText;
+        
+        const escapedQuery = escapeHTML(query);
+        const regex = new RegExp(`(${escapeRegExp(escapedQuery)})`, 'gi');
+        return escapedText.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        if (query.length >= 3) {
+            // Realizar búsqueda asíncrona
+            fetch(`/api/actividades/buscar?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultadosContainer.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        resultadosContainer.innerHTML = '<p class="msg-empty">No se encontraron actividades que coincidan con la búsqueda.</p>';
+                        return;
+                    }
+
+                    data.forEach(act => {
+                        const card = document.createElement('div');
+                        card.className = 'actividad-card';
+                        
+                        card.innerHTML = `
+                            <h3>${highlightText(act.nombreActividad, query)}</h3>
+                            <p><strong>Miembro:</strong> ${escapeHTML(act.nombreMiembro)}</p>
+                            <p><strong>Día:</strong> ${escapeHTML(act.dia)}</p>
+                            <p><strong>Tipo:</strong> ${highlightText(act.tipo, query)}</p>
+                            <p><strong>Comuna:</strong> ${highlightText(act.comuna, query)}</p>
+                            <p><strong>Descripción:</strong> ${escapeHTML(act.descripcion)}</p>
+                            <p>
+                                <strong>Nota Promedio:</strong> 
+                                <span class="nota-badge" id="nota-valor-${act.id}">${escapeHTML(act.nota)}</span> 
+                                (<span id="nota-cant-${act.id}">${escapeHTML(act.cantNotas)}</span> evaluaciones)
+                            </p>
+                            <button class="btn-evaluar" onclick="evaluarActividad(${act.id})">Evaluar</button>
+                        `;
+                        resultadosContainer.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    console.error("Error al buscar actividades:", err);
+                    resultadosContainer.innerHTML = '<p style="color:red;">Error al realizar la búsqueda.</p>';
+                });
+        } else {
+            resultadosContainer.innerHTML = '';
+        }
+    });
+
+    // Función para evaluar
+    function evaluarActividad(actividadId) {
+        const inputNota = prompt("Ingrese una nota para evaluar esta actividad (número entero entre 1 y 7):");
+        if (inputNota === null) return; // cancelado
+        
+        const notaNum = parseInt(inputNota, 10);
+        if (isNaN(notaNum) || notaNum < 1 || notaNum > 7 || inputNota.indexOf('.') !== -1 || inputNota.indexOf(',') !== -1) {
+            alert("Error: Debe ingresar un número entero válido entre 1 y 7, ambos inclusives.");
+            return;
+        }
+
+        // Llamada asíncrona para guardar la nota
+        fetch(`/api/actividades/${actividadId}/evaluar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ valor: notaNum })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("No se pudo guardar la evaluación.");
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Actualizar la interfaz asíncronamente
+            document.getElementById(`nota-valor-${actividadId}`).textContent = data.notaPromedio;
+            document.getElementById(`nota-cant-${actividadId}`).textContent = data.cantNotas;
+            alert("Evaluación guardada exitosamente.");
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Hubo un error al guardar la evaluación.");
+        });
+    }
+</script>
+
+</body>
+</html>

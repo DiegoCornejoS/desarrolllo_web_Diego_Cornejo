@@ -131,7 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Errores del Servidor (Validación del backend o Base de Datos)
                 boxErrores.style.display = 'block';
                 if (response.data.errors) {
-                    boxErrores.innerHTML = `<strong>Error:</strong><ul style="margin-top: 0.5rem; margin-left: 1.25rem;">${response.data.errors.map(err => `<li>${err}</li>`).join('')}</ul>`;
+                    // Función local de escape para reutilizarla aquí
+                    const escHTML = (str) => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+                    boxErrores.innerHTML = `<strong>Error:</strong><ul style="margin-top: 0.5rem; margin-left: 1.25rem;">${response.data.errors.map(err => `<li>${escHTML(err)}</li>`).join('')}</ul>`;
                 } else {
                     boxErrores.textContent = "Ocurrió un error inesperado al procesar el comentario.";
                 }

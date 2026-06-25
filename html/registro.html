@@ -41,6 +41,7 @@
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Ingresa tus datos y al menos una actividad. Los campos con <span style="color: var(--error-color);">*</span> son obligatorios.</p>
             
             <form id="registroActividadForm" method="POST" enctype="multipart/form-data" novalidate action="{{ url_for('registro') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 
                 <h2 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Datos del Miembro</h2>
                 

@@ -1,12 +1,25 @@
-# Sistema de Gestión de Actividades DCC - Tarea 3
+# Sistema de Gestión de Actividades DCC - Tarea 4
 
-Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python) y una base de datos MySQL gestionada a través de SQLAlchemy, con soporte para fallbacks automáticos.
+Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación original cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python).
 
-**En esta versión (Tarea 3), se han implementado e integrado funcionalidades interactivas asíncronas (AJAX) del lado del cliente y del lado del servidor.**
+**En esta versión (Tarea 4), se ha integrado un nuevo componente backend en Spring Boot (Java 17+)** para gestionar la búsqueda asíncrona de actividades y el sistema de evaluación con notas, conviviendo con la base de datos MySQL existente.
 
 ---
 
-## Nuevas Características (Tarea 3)
+## Nuevas Características (Tarea 4)
+
+### 1. Backend Spring Boot (Buscador y Evaluaciones)
+*   **Búsqueda Asíncrona:** API REST en Spring Boot (`/api/actividades/buscar`) que permite buscar actividades por nombre, tipo o comuna de forma dinámica.
+*   **Sistema de Evaluación:** Endpoint (`/api/actividades/{id}/evaluar`) para asignar notas (1-7) a las actividades, almacenándolas en una nueva tabla `nota`.
+*   **Seguridad Implementada:** 
+    *   Prevención de SQL Injection mediante consultas JPQL parametrizadas.
+    *   Validación estricta de notas en el backend usando Bean Validation (`@Valid`, `@Min`, `@Max`).
+    *   Manejo seguro de errores, evitando exponer trazas internas al cliente.
+    *   Mejoras de seguridad en el backend original (Python), incluyendo whitelist de extensiones para subida de archivos y límite de tamaño.
+
+---
+
+## Características Previas (Tarea 3)
 
 ### 1. Indicadores y Estadísticas Dinámicas (AJAX + Chart.js)
 *   Se eliminaron los gráficos mockeados estáticos y se sustituyeron por **3 gráficos interactivos en tiempo real** en la sección `/indicadores`:
@@ -50,18 +63,32 @@ La aplicación está diseñada para ser **"plug-and-play"**:
 1.  **MySQL (Recomendado):** Si tienes MySQL corriendo en `localhost` con las credenciales por defecto, el script `seed.py` configurará la base de datos `tarea2` y el usuario `cc5002` automáticamente.
 2.  **SQLite (Fallback Automático):** Si MySQL no está disponible, utilizará de manera automática una base de datos local SQLite (`tarea2.db`). **Esto permite que el revisor ejecute la aplicación de inmediato sin configurar ningún servidor de base de datos.**
 
-### 3. Inicialización y Ejecución
-1. Para **crear automáticamente las tablas (incluyendo la nueva tabla `comentario`)** y cargar información geográfica e inicial de prueba, ejecute:
+### 3. Ejecución - Aplicación Python (Módulos Base)
+1. Para **crear automáticamente las tablas** y cargar información inicial, ejecute:
    ```bash
    python seed.py
    ```
-2. Levanta la aplicación ejecutando el servidor de desarrollo:
+2. Levanta la aplicación original ejecutando:
    ```bash
    python app.py
    ```
-3. Abre tu navegador web en `http://localhost:5000/`.
+3. La aplicación Python estará disponible en `http://localhost:5000/`.
 
-### 4. Guía Rápida de Comandos en Windows (PowerShell)
+### 4. Compilación y Ejecución - Backend Spring Boot (Tarea 4)
+El nuevo componente para búsqueda y evaluación requiere Java 17 y Maven.
+
+1. Asegúrate de tener la base de datos MySQL corriendo con la estructura creada por `seed.py`.
+2. Para **compilar** el proyecto Spring Boot, abre una terminal en la raíz del proyecto y ejecuta:
+   ```bash
+   mvn clean compile
+   ```
+3. Para **levantar** la aplicación Spring Boot, ejecuta:
+   ```bash
+   mvn spring-boot:run
+   ```
+4. El nuevo buscador estará disponible en `http://localhost:8080/buscador`.
+
+### 5. Guía Rápida de Comandos en Windows (PowerShell)
 ```powershell
 # Crear y activar entorno
 python -m venv venv
