@@ -1,0 +1,58 @@
+CC5002 - Tarea 5
+Profesor: José Urzúa — Fecha de Entrega: miércoles 15 de julio de 2026
+Descripción
+Con el cambio de tecnología incluido en la Tarea 4 se lograron excelentes resultados en
+términos de rendimiento y ahora se piden tres nuevas funcionalidades, las cuales deben ser
+desarrolladas usando el Framework Spring Boot junto con Spring Security.
+La primera funcionalidad consiste en un administrador de fotos asociadas a las actividades.
+Para esto, se debe habilitar una URL “/admin-fotos” que despliega una galería con las
+fotografías ingresadas, ordenadas de la más reciente a la más antigua. En el listado se debe
+mostrar la foto junto con la fecha de registro del miembro que informó la actividad
+extraprogramática (columna fecha_registro de tabla miembro), el nombre de la comuna
+correspondiente al miembro (columna nombre de tabla comuna que corresponde al comuna_id
+de la tabla miembro) y dirección de correo electrónico del miembro correspondiente (columna
+email de tabla miembro). Junto a esta información, se debe agregar un botón que permita
+marcar como eliminada la foto. Al hacer clic sobre el botón se debe solicitar un texto para
+informar el motivo de eliminación y luego de ingresar el texto (obligatorio informar con largo
+mínimo 5 y largo máximo 200) debe permitir continuar con la eliminación. Al continuar, debe
+realizar una actualización de la fila correspondiente en la tabla “foto” de la base de datos
+asignando el valor 1 en la columna “eliminada” (nueva columna de la tabla) y debe dejar
+registro de esta acción en la nueva tabla “log” de la base de datos, insertando el mensaje
+“eliminado foto {id-foto} por usuario admin, motivo: {motivo}”. En el mensaje, {id-foto}
+corresponde al id de la foto en la base de datos y {motivo} corresponde al texto que se informa
+al momento de eliminar la foto. Esta URL (“/admin-fotos/”) no debe ser de acceso público y
+debe solicitar nombre de usuario y contraseña para poder usarla. Esta autenticación la debe
+implementar usando Spring Security y solo debe permitir el acceso al usuario “cc5002” con
+contraseña “examen”.
+La segunda funcionalidad consiste en habilitar la URL “/mensajes-log” que permite el acceso a
+dos usuarios: “cc5002” con contraseña “examen” y al usuario “auditor” con contraseña
+“log-auditor”. Si la autenticación es exitosa, debe desplegar de forma ordenada todo el
+contenido de la nueva tabla “log” de la base de datos. Esto incluye las columnas id, fecha y
+mensaje, mostrando desde la más reciente a la más antigua.
+La tercera funcionalidad es de acceso público y corresponde a la URL “/estadistica-fotos” que
+muestra un gráfico que informa el total de fotos vigentes y el total de fotos eliminadas.
+Consideraciones
+● En el lado del servidor debe usar el framework Spring Boot con Java versión 17
+(mínima) y JPA para la comunicación con la base de datos.
+● Puede usar AJAX para las funcionalidades que estime pertinente. Puede usar
+bibliotecas externas.
+● Si necesita apoyo en uso de JPA o interacción con la base de datos, no dude en
+publicar en el foro de u-cursos.
+● Use el archivo adjunto “modificaciones-base-datos.sql” para agregar la nueva
+columna “eliminada” a la tabla foto y crear la nueva tabla “log” en la base de datos.
+● En la evaluación se utilizará el validador de HTML ( http://validator.w3.org/) y CSS
+(http://jigsaw.w3.org/css-validator/) de W3C. Se descontarán 0.1 puntos por cada error
+de HTML5 o CSS mostrado por los validadores.
+● Pruebe que sus archivos se vean bien en distintos browser y la resolución mínima
+soportada debe ser 1024x768. Utilice imágenes para las cuales tenga derechos de uso.
+● Deben entregar su tarea mediante un repositorio de GitHub. Para ello, deben crear un
+usuario en GitHub (si aún no tienen uno) y configurar un repositorio público con el
+siguiente esquema de nombre: desarrollo_web_nombre_apellido.
+● En el repositorio, deberán crear una rama llamada "Tarea 5", donde subirán todos los
+archivos correspondientes a la entrega. Además, dentro de esta rama, el repositorio
+debe incluir un archivo README.md, en el cual explique algún detalle o decisión que
+usted tomó y que se deba tener en cuenta para la corrección.
+● También, es OBLIGATORIO ENTREGAR POR U-CURSOS, deberán escribir en los
+comentarios de la tarea el enlace de su repositorio, y además DEBE ENVIAR los
+archivos relevantes de la tarea en formato .zip a modo de respaldo en caso de
+problemas con su repositorio

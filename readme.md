@@ -1,12 +1,27 @@
-# Sistema de Gestión de Actividades DCC - Tarea 4
+# Sistema de Gestión de Actividades DCC - Tarea 5
 
-Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación original cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python).
+Este repositorio contiene el desarrollo del Sistema de Gestión de Actividades para el DCC. La aplicación original cuenta con una interfaz web en HTML, CSS y JS, integrando un backend construido con Flask (Python) y ha evolucionado hacia un ecosistema robusto en Spring Boot.
 
-**En esta versión (Tarea 4), se ha integrado un nuevo componente backend en Spring Boot (Java 17+)** para gestionar la búsqueda asíncrona de actividades y el sistema de evaluación con notas, conviviendo con la base de datos MySQL existente.
+**En esta versión (Tarea 5), se ha integrado un completo sistema de seguridad con Spring Security** y tres nuevas funcionalidades avanzadas sobre el framework Spring Boot.
 
 ---
 
-## Nuevas Características (Tarea 4)
+## Nuevas Características (Tarea 5)
+
+### 1. Spring Security y Panel de Administración
+*   **Autenticación en Memoria:** Se implementaron usuarios administradores (`cc5002`) y auditores (`auditor`) protegidos mediante configuración en el backend.
+*   **Gestor de Fotos:** Endpoint seguro (`/admin-fotos`) que permite revisar las fotografías de actividades y realizar una eliminación lógica (*soft-delete*).
+*   **Protección Anti-CSRF:** Implementación integral de tokens CSRF tanto en el nuevo panel como retroactivamente en el buscador público para asegurar las peticiones AJAX (`fetch`).
+
+### 2. Registro de Auditoría (Logs)
+*   **Tabla de Log (SQL):** Nuevo endpoint (`/mensajes-log`) que muestra en tiempo real todos los registros de acciones tomadas (como la eliminación de fotos), resguardando quién borró qué imagen y bajo qué motivo.
+
+### 3. Estadísticas Gráficas de Fotos
+*   **Dashboard Público:** Nueva vista pública (`/estadistica-fotos`) renderizada de forma asíncrona mediante Chart.js, mostrando el total en tiempo real de fotos vigentes versus eliminadas en base a los registros de la base de datos (con gráficos dinámicos tipo Doughnut y Bar).
+
+---
+
+## Características Previas (Tarea 4)
 
 ### 1. Backend Spring Boot (Buscador y Evaluaciones)
 *   **Búsqueda Asíncrona:** API REST en Spring Boot (`/api/actividades/buscar`) que permite buscar actividades por nombre, tipo o comuna de forma dinámica.

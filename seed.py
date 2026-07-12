@@ -121,6 +121,30 @@ def seed_database():
             else:
                 print("Los datos de ejemplo ya existen.")
 
+        # 3. Aplicar modificaciones Tarea 5 (Spring Boot)
+        sql_t5_path = os.path.join("Enunciados", "tarea5", "modificaciones-base-datos.sql")
+        if os.path.exists(sql_t5_path):
+            try:
+                print(f"Aplicando modificaciones de base de datos para Tarea 5 desde {sql_t5_path}...")
+                with open(sql_t5_path, 'r', encoding='utf-8') as f:
+                    sql_content = f.read()
+                
+                from sqlalchemy import text
+                statements = sql_content.split(';')
+                for statement in statements:
+                    stmt = statement.strip()
+                    if stmt:
+                        try:
+                            db.session.execute(text(stmt))
+                        except Exception:
+                            # Ignoramos silenciosamente si la tabla o columna ya existe
+                            pass
+                db.session.commit()
+                print("Modificaciones de Tarea 5 aplicadas exitosamente.")
+            except Exception as e:
+                print(f"Error aplicando modificaciones de Tarea 5: {e}")
+                db.session.rollback()
+
 if __name__ == "__main__":
     try:
         seed_database()
